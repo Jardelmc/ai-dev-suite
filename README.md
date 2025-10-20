@@ -2,7 +2,7 @@
 
 ![Logo](ai-dev-suite-frontend/src/assets/logo.png)
 
-**Sua suíte de desenvolvimento local centralizada e potencializada por IA para acelerar a criação, análise e gerenciamento de projetos Node.js e React.**
+**Sua suítee de desenvolvimento local centralizada e potencializada por IA para acelerar a criação, análise e gerenciamento de projetos Node.js e React.**
 
 O **AI Dev Suite** é uma ferramenta full-stack projetada para desenvolvedores que utilizam modelos de linguagem (LLMs) em seu fluxo de trabalho. Ele age como uma ponte entre a geração de código por IA e seu ambiente de desenvolvimento local, automatizando tarefas repetitivas e fornecendo insights valiosos sobre suas aplicações.
 
