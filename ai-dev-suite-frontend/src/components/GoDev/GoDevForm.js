@@ -44,7 +44,7 @@ const GoDevForm = ({ project, onPromptGenerated, showNotification }) => {
 
     fetchSubProjects();
     onPromptGenerated(''); // Clear prompt on project change
-  }, [project, showNotification]);
+  }, [project]);
 
   const handleApplicationChange = (event) => {
     const { value, checked } = event.target;
@@ -76,7 +76,6 @@ const GoDevForm = ({ project, onPromptGenerated, showNotification }) => {
   };
   
   const isRootProjectWithSubProjects = subProjects.length > 0;
-
   return (
     <Box>
       <Typography variant="h6" gutterBottom>

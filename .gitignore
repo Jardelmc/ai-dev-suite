@@ -1,4 +1,5 @@
 node_modules
+package-lock.json
 ai-dev-suite-backend/.git
 ai-dev-suite-frontend/.git
 ai-dev-suite-backend/_.git

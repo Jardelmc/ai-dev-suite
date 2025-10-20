@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -12,6 +13,7 @@ import {
 import {
   Analytics as AnalyticsIcon,
   Download as DownloadIcon,
+  Bolt as GoDevIcon,
 } from "@mui/icons-material";
 import { analyzeProject } from "../../services/api";
 
@@ -22,6 +24,7 @@ const EnhancedAnalyzerForm = ({
   setLoading,
   preselectedProject = null,
 }) => {
+  const navigate = useNavigate();
   const [autoDownload, setAutoDownload] = useState(true);
   const [useCustomDirectory, setUseCustomDirectory] = useState(false);
   const [customDirectory, setCustomDirectory] = useState("");
@@ -30,7 +33,6 @@ const EnhancedAnalyzerForm = ({
     event.preventDefault();
 
     let dataToSubmit;
-
     if (useCustomDirectory) {
       if (!customDirectory.trim()) {
         onError(new Error("Informe o diretório personalizado"));
@@ -71,7 +73,6 @@ const EnhancedAnalyzerForm = ({
         .replace(/[:.]/g, "-")
         .replace("T", "_")
         .substring(0, 16);
-
       const projectName = result.projectName.replace(/[^a-zA-Z0-9]/g, "_");
       const fileName = `${projectName}_${timestamp}.txt`;
 
@@ -154,39 +155,52 @@ const EnhancedAnalyzerForm = ({
         />
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-start", gap: 2 }}>
-        <Button
-          type="submit"
-          variant="contained"
-          size="large"
-          startIcon={
-            loading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <AnalyticsIcon />
-            )
-          }
-          disabled={
-            loading ||
-            (!useCustomDirectory && !hasProjectSelected) ||
-            (useCustomDirectory && !customDirectory.trim())
-          }
-          sx={{ minWidth: 180 }}
-        >
-          {loading ? "Analisando..." : "Analisar Projeto"}
-        </Button>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              startIcon={
+                loading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <AnalyticsIcon />
+                )
+              }
+              disabled={
+                loading ||
+                (!useCustomDirectory && !hasProjectSelected) ||
+                (useCustomDirectory && !customDirectory.trim())
+              }
+              sx={{ minWidth: 180 }}
+            >
+              {loading ? "Analisando..." : "Analisar Projeto"}
+            </Button>
 
-        {autoDownload && (
-          <Button
+            {autoDownload && (
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<DownloadIcon />}
+                disabled
+                sx={{ minWidth: 160 }}
+              >
+                Download Automático
+              </Button>
+            )}
+        </Box>
+        
+        <Button
             variant="outlined"
             size="large"
-            startIcon={<DownloadIcon />}
-            disabled
-            sx={{ minWidth: 160 }}
-          >
-            Download Automático
-          </Button>
-        )}
+            color="secondary"
+            startIcon={<GoDevIcon />}
+            onClick={() => navigate('/go-dev')}
+            sx={{ minWidth: 140 }}
+        >
+            Go Dev
+        </Button>
       </Box>
     </Box>
   );
