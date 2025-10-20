@@ -1,0 +1,18 @@
+{
+  "name": "ai-dev-suite-root",
+  "version": "1.0.0",
+  "description": "AI Dev Suite - Frontend e Backend integrados",
+  "author": "Jardel Casteluber",
+  "main": "index.js",
+  "scripts": {},
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "react",
+    "nodejs",
+    "express",
+    "fullstack"
+  ],
+  "license": "ISC"
+}
