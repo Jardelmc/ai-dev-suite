@@ -1,4 +1,4 @@
-import React, { useState, useMemo, createContext } from 'react';
+import React, { useState, useMemo, createContext, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Snackbar, Alert } from '@mui/material';
@@ -26,7 +26,24 @@ const App = () => {
     severity: 'info',
   });
   const [apiStatus, setApiStatus] = useState('checking');
-  const [mode, setMode] = useState('light');
+  
+  const [mode, setMode] = useState(() => {
+    try {
+      const savedMode = localStorage.getItem('ai-dev-suite-theme-mode');
+      return savedMode || 'light';
+    } catch (error) {
+      console.warn("Could not read theme mode from localStorage", error);
+      return 'light';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ai-dev-suite-theme-mode', mode);
+    } catch (error) {
+      console.warn("Could not save theme mode to localStorage", error);
+    }
+  }, [mode]);
 
   const colorMode = useMemo(
     () => ({
@@ -36,12 +53,12 @@ const App = () => {
     }),
     [],
   );
-
   const theme = useMemo(() => getAppTheme(mode), [mode]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     checkApiHealth();
   }, []);
+
   const checkApiHealth = async () => {
     try {
       await healthCheck();
@@ -63,6 +80,7 @@ const App = () => {
   const closeNotification = () => {
     setNotification(prev => ({ ...prev, open: false }));
   };
+
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>

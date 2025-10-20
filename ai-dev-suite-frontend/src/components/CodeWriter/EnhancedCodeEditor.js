@@ -29,7 +29,6 @@ import { generateFiles } from "../../services/api";
 
 const FilePreview = ({ generatedCode, projectTitle }) => {
   const [expandedFolders, setExpandedFolders] = useState({});
-
   const fileTree = useMemo(() => {
     const fileRegex = /\[FILEPATH:([^\]]+)\]/g;
     let match;
@@ -46,6 +45,7 @@ const FilePreview = ({ generatedCode, projectTitle }) => {
 
     paths.forEach((path) => {
       const parts = path.split(/[\\/]/);
+
       let currentNode = tree;
 
       parts.forEach((part, index) => {
@@ -79,7 +79,6 @@ const FilePreview = ({ generatedCode, projectTitle }) => {
 
   const renderTree = (node, level = 0) => {
     if (!node || !node.children) return null;
-
     const childrenArray = Object.values(node.children);
 
     return (
@@ -139,7 +138,6 @@ const FilePreview = ({ generatedCode, projectTitle }) => {
       </List>
     );
   };
-
   if (!generatedCode.trim() || !generatedCode.includes("[FILEPATH:")) {
     return null;
   }
@@ -182,7 +180,6 @@ const EnhancedCodeEditor = ({
       setShowRestoreButton(false);
     }
   };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -204,8 +201,10 @@ const EnhancedCodeEditor = ({
         onError(new Error("Selecione um projeto ou informe um diretório"));
         return;
       }
+      const { projectId, projectDir } = preselectedProject;
       dataToSubmit = {
-        ...preselectedProject,
+        ...(projectId && { projectId }),
+        ...(projectDir && { projectDir }),
         generatedCode: formData.generatedCode,
       };
     }
@@ -237,23 +236,19 @@ const EnhancedCodeEditor = ({
       setLoading(false);
     }
   };
-
   const handleRestore = () => {
     setFormData((prev) => ({ ...prev, generatedCode: lastGeneratedCode }));
     setShowRestoreButton(false);
   };
-
   const getFileCount = () => {
     const matches = formData.generatedCode.match(/\[FILEPATH:/g);
     return matches ? matches.length : 0;
   };
-
   const hasProjectSelected =
     preselectedProject &&
     (preselectedProject.projectId || preselectedProject.projectDir);
 
   const projectTitle = preselectedProject?.title || "Projeto";
-
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <Typography variant="h6" gutterBottom>

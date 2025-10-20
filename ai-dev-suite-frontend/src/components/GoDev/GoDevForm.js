@@ -30,7 +30,7 @@ const GoDevForm = ({ project, onPromptGenerated, showNotification }) => {
           const projectWithChildren = await getProject(project.id, true);
           const children = projectWithChildren.children || [];
           setSubProjects(children);
-          setImpactedApplications(children.map(p => p.id));
+          setImpactedApplications([]); // Start with no applications selected
         } catch (error) {
           showNotification("Falha ao buscar sub-projetos: " + error.message, 'error');
         } finally {
@@ -76,6 +76,7 @@ const GoDevForm = ({ project, onPromptGenerated, showNotification }) => {
   };
   
   const isRootProjectWithSubProjects = subProjects.length > 0;
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
