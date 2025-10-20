@@ -1,5 +1,6 @@
 const simpleGit = require('simple-git');
 const path = require('path');
+const fse = require('fs-extra');
 const fileService = require('./fileService');
 const logger = require('../utils/logger');
 const projectService = require('./projectService');
@@ -69,39 +70,105 @@ const commitChanges = async (projectDir, message) => {
   }
 };
 
-const processCommit = async (projectDir, commitMessage = 'Initial commit via API') => {
-  const dirExists = await fileService.directoryExists(projectDir);
-  let gitInitialized = false;
-  let commitPerformed = false;
-
-  if (!dirExists) {
-    await fileService.createDirectory(projectDir);
-    await createGitignore(projectDir);
-    await initializeGit(projectDir);
-    gitInitialized = true;
-    commitPerformed = await commitChanges(projectDir, 'Initial commit via API');
-  } else {
-    const isGit = await isGitRepository(projectDir);
-    if (!isGit) {
-      await createGitignoreIfNotExists(projectDir);
-      await initializeGit(projectDir);
-      gitInitialized = true;
-      commitPerformed = await commitChanges(projectDir, 'Initial commit via API');
-    } else {
-      await createGitignoreIfNotExists(projectDir);
-      commitPerformed = await commitChanges(projectDir, commitMessage);
+const renameGitDirs = async (projects, from, to) => {
+    const renamed = [];
+    for (const project of projects) {
+        if (project.directory) {
+            const fromPath = path.join(project.directory, from);
+            const toPath = path.join(project.directory, to);
+            try {
+                if (await fse.pathExists(fromPath)) {
+                    await fse.rename(fromPath, toPath);
+                    renamed.push(toPath);
+                }
+            } catch (renameError) {
+                for (const renamedPath of renamed) {
+                    const originalPath = path.join(path.dirname(renamedPath), from);
+                    try {
+                        await fse.rename(renamedPath, originalPath);
+                    } catch (rollbackError) {
+                        logger.error(`CRITICAL: Failed to rollback git directory rename for ${renamedPath}: ${rollbackError.message}`);
+                    }
+                }
+                throw new Error(`Failed to rename .git directory for sub-project ${project.title}. Commit aborted. Error: ${renameError.message}`);
+            }
+        }
     }
-  }
-
-  return {
-    directory: projectDir,
-    gitInitialized: gitInitialized,
-    commitPerformed: commitPerformed,
-    message: commitPerformed
-      ? `Commit successful: ${commitMessage}`
-      : 'No changes to commit.'
-  };
+    return renamed;
 };
+
+const restoreGitDirs = async (projects, from, to) => {
+    for (const project of projects) {
+        if (project.directory) {
+            const fromPath = path.join(project.directory, from);
+            const toPath = path.join(project.directory, to);
+            try {
+                if (await fse.pathExists(fromPath)) {
+                    await fse.rename(fromPath, toPath);
+                }
+            } catch (restoreError) {
+                logger.error(`Failed to restore git directory for sub-project ${project.title}: ${restoreError.message}`);
+            }
+        }
+    }
+};
+
+const processCommit = async (projectDir, commitMessage = 'Initial commit via API', projectId) => {
+    const project = projectId ? await projectService.getProjectById(projectId, true) : null;
+    const isRootWithChildren = project && !project.parentId && project.children && project.children.length > 0;
+
+    if (isRootWithChildren) {
+        let commitPerformed = false;
+        try {
+            await renameGitDirs(project.children, '.git', '_.git');
+            commitPerformed = await commitChanges(projectDir, commitMessage);
+        } catch (error) {
+            logger.error(`Error during commit process for root project: ${error.message}`);
+            throw error;
+        } finally {
+            await restoreGitDirs(project.children, '_.git', '.git');
+        }
+        
+        return {
+            directory: projectDir,
+            gitInitialized: true,
+            commitPerformed,
+            message: commitPerformed ? `Commit successful: ${commitMessage}` : 'No changes to commit.'
+        };
+
+    } else {
+        const dirExists = await fileService.directoryExists(projectDir);
+        let gitInitialized = false;
+        let commitPerformed = false;
+
+        if (!dirExists) {
+            await fileService.createDirectory(projectDir);
+            await createGitignore(projectDir);
+            await initializeGit(projectDir);
+            gitInitialized = true;
+            commitPerformed = await commitChanges(projectDir, 'Initial commit via API');
+        } else {
+            const isGit = await isGitRepository(projectDir);
+            if (!isGit) {
+                await createGitignoreIfNotExists(projectDir);
+                await initializeGit(projectDir);
+                gitInitialized = true;
+                commitPerformed = await commitChanges(projectDir, 'Initial commit via API');
+            } else {
+                await createGitignoreIfNotExists(projectDir);
+                commitPerformed = await commitChanges(projectDir, commitMessage);
+            }
+        }
+
+        return {
+            directory: projectDir,
+            gitInitialized: gitInitialized,
+            commitPerformed: commitPerformed,
+            message: commitPerformed ? `Commit successful: ${commitMessage}` : 'No changes to commit.'
+        };
+    }
+};
+
 
 const revertChanges = async (projectDir) => {
   const git = simpleGit({ ...gitOptions, baseDir: projectDir });
@@ -143,7 +210,6 @@ const getGitStatusForProject = async (projectId) => {
 
     const statusResults = [];
     const rootIsDirExists = await fileService.directoryExists(project.directory);
-
     if (rootIsDirExists) {
         const rootStatus = await getProjectStatus(project.directory);
         statusResults.push({
@@ -166,7 +232,7 @@ const getGitStatusForProject = async (projectId) => {
     if (project.children && project.children.length > 0) {
         for (const child of project.children) {
             const childDirExists = await fileService.directoryExists(child.directory);
-             if (childDirExists) {
+            if (childDirExists) {
                 const childStatus = await getProjectStatus(child.directory);
                 statusResults.push({
                     projectId: child.id,

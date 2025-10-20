@@ -34,7 +34,6 @@ import {
 } from "@mui/icons-material";
 import logo from "../../assets/logo.png";
 import { ColorModeContext } from "../../App";
-
 const NavigationHeader = ({ apiStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,7 +41,6 @@ const NavigationHeader = ({ apiStatus }) => {
 
   const theme = useTheme();
   const colorMode = useContext(ColorModeContext);
-
   const getActiveTab = () => {
     const path = location.pathname;
     if (path.startsWith("/analyzer")) return 0;
@@ -109,7 +107,7 @@ const NavigationHeader = ({ apiStatus }) => {
     handleProjectMenuClose();
   };
   return (
-    <AppBar position="static" color="primary" elevation={1}>
+    <AppBar position="sticky" color="primary" elevation={1} sx={{ top: 0, zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar sx={{ justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <IconButton
