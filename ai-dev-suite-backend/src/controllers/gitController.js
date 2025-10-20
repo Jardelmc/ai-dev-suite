@@ -23,7 +23,7 @@ const commitChanges = async (req, res, next) => {
       return responseFormatter.error(res, 400, 'VALIDATION_ERROR', 'Project directory or projectId with configured directory is required.');
     }
 
-    const result = await gitService.processCommit(targetDirectory, commitMessage, projectId);
+    const result = await gitService.processCommit(targetDirectory, commitMessage);
     logger.info(`Git commit processed for directory: ${targetDirectory}`);
     return responseFormatter.success(res, result.message, result);
   } catch (error) {

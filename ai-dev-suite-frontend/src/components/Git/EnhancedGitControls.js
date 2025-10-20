@@ -16,26 +16,21 @@ import {
   Undo as UndoIcon 
 } from '@mui/icons-material';
 import { commitChanges, revertChanges } from '../../services/api';
-import { useProjectContext } from '../../contexts/ProjectContext';
 
 const EnhancedGitControls = ({ 
   onGitAction, 
   onError, 
   preselectedProject = null 
 }) => {
-  const { projects } = useProjectContext();
   const [commitMessage, setCommitMessage] = useState('');
   const [loading, setLoading] = useState({ commit: false, revert: false });
   const [useCustomDirectory, setUseCustomDirectory] = useState(false);
   const [customDirectory, setCustomDirectory] = useState('');
-
   const handleCommitMessageChange = (event) => {
     setCommitMessage(event.target.value);
   };
-
   const handleCommit = async () => {
     let dataToSubmit;
-
     if (useCustomDirectory) {
       if (!customDirectory.trim()) {
         onError(new Error('Informe o diretório personalizado'));
@@ -56,20 +51,6 @@ const EnhancedGitControls = ({
       };
     }
 
-    const selected = preselectedProject && preselectedProject.projectId ? projects.find(p => p.id === preselectedProject.projectId) : null;
-    const isRootProject = selected && !selected.parentId;
-    if (isRootProject) {
-        const subProjects = projects.filter(p => p.parentId === preselectedProject.projectId);
-        if (subProjects.length > 0) {
-            const confirmed = window.confirm(
-                'Este é um projeto raiz com sub-projetos.\n\nPara realizar o commit, os repositórios .git dos sub-projetos serão temporariamente renomeados. Esta é uma operação segura e será revertida automaticamente.\n\nDeseja continuar?'
-            );
-            if (!confirmed) {
-                return;
-            }
-        }
-    }
-
     setLoading(prev => ({ ...prev, commit: true }));
     try {
       const result = await commitChanges(dataToSubmit);
@@ -80,7 +61,6 @@ const EnhancedGitControls = ({
       setLoading(prev => ({ ...prev, commit: false }));
     }
   };
-
   const handleRevert = async () => {
     if (!window.confirm('Tem certeza que deseja reverter todas as alterações? Esta ação não pode ser desfeita.')) {
       return;
@@ -112,7 +92,6 @@ const EnhancedGitControls = ({
       setLoading(prev => ({ ...prev, revert: false }));
     }
   };
-
   const hasProjectSelected = preselectedProject && (preselectedProject.projectId || preselectedProject.projectDir);
 
   return (
