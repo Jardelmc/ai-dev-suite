@@ -43,15 +43,15 @@ export const getGitStatus = async (projectId) => {
   return response.data.data;
 };
 export const getRemoteStatus = async (projectId) => {
-  const response = await apiClient.get(`/git/remote-status/${projectId}`);
-  return response.data.data;
+    const response = await apiClient.get(`/git/remote-status/${projectId}`);
+    return response.data.data;
 };
 export const createGitBranch = async (data) => {
-  const response = await apiClient.post("/git/branch", data);
+  const response = await apiClient.post('/git/branch', data);
   return response.data.data;
 };
 export const mergeGitBranch = async (data) => {
-  const response = await apiClient.post("/git/branch/merge", data);
+  const response = await apiClient.post('/git/branch/merge', data);
   return response.data.data;
 };
 export const getProjectReferenceBranch = async (projectId) => {
@@ -59,11 +59,11 @@ export const getProjectReferenceBranch = async (projectId) => {
   return response.data.data;
 };
 export const setProjectReferenceBranch = async (data) => {
-  const response = await apiClient.post("/git/reference-branch", data);
+  const response = await apiClient.post('/git/reference-branch', data);
   return response.data.data;
 };
 export const initGitRepository = async (data) => {
-  const response = await apiClient.post("/git/init", data);
+  const response = await apiClient.post('/git/init', data);
   return response.data;
 };
 export const getProjects = async (parentId = null) => {
@@ -75,7 +75,7 @@ export const getProject = async (id, includeChildren = false) => {
   const response = await apiClient.get(`/projects/${id}`, {
     params: { includeChildren },
   });
-  return response.data.data;
+return response.data.data;
 };
 
 export const createProject = async (data) => {
@@ -181,14 +181,11 @@ export const buildProject = async (data) => {
   return response.data.data;
 };
 export const generateSolutionPrompt = async (data) => {
-  const response = await apiClient.post(
-    "/project-builder/generate-prompt",
-    data
-  );
+  const response = await apiClient.post("/project-builder/generate-prompt", data);
   return response.data.data;
 };
 export const generateFavicons = async (data) => {
-  const response = await apiClient.post("/favicons/generate", data);
+  const response = await apiClient.post('/favicons/generate', data);
   return response.data.data;
 };
 export const openInExplorer = async (data) => {
@@ -196,27 +193,23 @@ export const openInExplorer = async (data) => {
   return response.data.data;
 };
 export const getGitRemotes = async (projectId) => {
-  const response = await apiClient.get(`/git/remotes/${projectId}`);
-  return response.data.data;
+    const response = await apiClient.get(`/git/remotes/${projectId}`);
+    return response.data.data;
 };
 export const addGitRemote = async (data) => {
-  const response = await apiClient.post("/git/remotes", data);
-  return response.data.data;
+    const response = await apiClient.post('/git/remotes', data);
+    return response.data.data;
 };
 export const removeGitRemote = async (data) => {
-  const response = await apiClient.delete("/git/remotes", { data });
-  return response.data.data;
+    const response = await apiClient.delete('/git/remotes', { data });
+return response.data.data;
 };
 export const pushToRemote = async (data) => {
-  const response = await apiClient.post("/git/push", data);
-  return response.data.data;
+    const response = await apiClient.post('/git/push', data);
+return response.data.data;
 };
 export const pullFromRemote = async (data) => {
-  const response = await apiClient.post("/git/pull", data);
-  return response.data.data;
-};
-export const cloneRepository = async (data) => {
-  const response = await apiClient.post("/git/clone", data);
-  return response.data.data;
+    const response = await apiClient.post('/git/pull', data);
+return response.data.data;
 };
 export default apiClient;

@@ -8,26 +8,28 @@ import {
   CircularProgress,
   Alert,
   Button,
-  Modal
+  Modal,
+  Stack
 } from "@mui/material";
-import { Add as AddIcon, Block as IgnoreIcon } from '@mui/icons-material';
+import { Add as AddIcon, Block as IgnoreIcon, CloudDownload as ImportIcon } from '@mui/icons-material';
 import { getProjects } from "../services/api";
 import ProjectList from "../components/Projects/ProjectList";
 import ProjectDetail from "../components/Projects/ProjectDetail";
 import ProjectForm from "../components/Projects/ProjectForm";
 import IgnoreManager from "../components/Projects/IgnoreManager";
+import GitImportModal from "../components/Projects/GitImportModal";
 
 const ProjectsPage = ({ showNotification }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
-  const [view, setView] = useState('detail'); // 'detail', 'edit', 'create'
+  const [view, setView] = useState('detail');
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [parentForNewSubproject, setParentForNewSubproject] = useState(null);
-
   const [ignoreModalOpen, setIgnoreModalOpen] = useState(false);
   const [projectForIgnore, setProjectForIgnore] = useState(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   const loadProjectsData = useCallback(async () => {
     setLoading(true);
@@ -49,14 +51,12 @@ const ProjectsPage = ({ showNotification }) => {
       });
       setProjects(rootProjects);
 
-      // Reselect the project to get updated data
       if (selectedProject) {
         const updatedSelected = projectList.find(p => p.id === selectedProject.id);
         if (updatedSelected) {
           const updatedSelectedWithChildren = projectMap[updatedSelected.id];
           setSelectedProject(updatedSelectedWithChildren);
         } else {
-          // The selected project might have been deleted
           setSelectedProject(null);
           setView('detail');
         }
@@ -123,6 +123,12 @@ const ProjectsPage = ({ showNotification }) => {
     setProjectForIgnore(null);
   };
 
+  const handleImportSuccess = (message) => {
+    showNotification(message, 'success');
+    setImportModalOpen(false);
+    loadProjectsData();
+  };
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -134,15 +140,25 @@ const ProjectsPage = ({ showNotification }) => {
             Organize, visualize e gerencie todos os seus projetos e sub-sistemas em um único lugar.
           </Typography>
         </Box>
-        <Box>
-            <Button
-                variant="outlined"
-                startIcon={<IgnoreIcon />}
-                onClick={() => openIgnoreManager(null)}
-                sx={{ mr: 2 }}
-            >
-                Ignorados Globais
-            </Button>
+        <Stack direction="column" spacing={1} alignItems="flex-end">
+            <Stack direction="row" spacing={1}>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<IgnoreIcon />}
+                    onClick={() => openIgnoreManager(null)}
+                >
+                    Ignorados Globais
+                </Button>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ImportIcon />}
+                    onClick={() => setImportModalOpen(true)}
+                >
+                    Importar Sub-Projeto Git
+                </Button>
+            </Stack>
             <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -150,7 +166,7 @@ const ProjectsPage = ({ showNotification }) => {
             >
                 Novo Projeto Raiz
             </Button>
-        </Box>
+        </Stack>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -203,7 +219,7 @@ const ProjectsPage = ({ showNotification }) => {
             onClose={closeIgnoreManager}
             aria-labelledby="ignore-manager-title"
         >
-            <Box sx={{
+          <Box sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
@@ -217,6 +233,30 @@ const ProjectsPage = ({ showNotification }) => {
                     project={projectForIgnore}
                     onAction={(msg, sev) => showNotification(msg, sev)}
                     onClose={closeIgnoreManager}
+                />
+            </Box>
+        </Modal>
+        <Modal
+            open={importModalOpen}
+            onClose={() => setImportModalOpen(false)}
+            aria-labelledby="import-git-subproject-title"
+        >
+            <Box sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: { xs: '90%', sm: 700 },
+                bgcolor: 'background.paper',
+                boxShadow: 24,
+                borderRadius: 2,
+                p: 4,
+            }}>
+                <GitImportModal
+                    projects={projects.filter(p => !p.parentId)}
+                    onClose={() => setImportModalOpen(false)}
+                    onSuccess={handleImportSuccess}
+                    showNotification={showNotification}
                 />
             </Box>
         </Modal>
