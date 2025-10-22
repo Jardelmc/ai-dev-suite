@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Divider, // Import Divider
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -27,9 +28,10 @@ import {
   Delete as DeleteIcon,
   ContentCopy as CopyIcon,
   Search as SearchIcon,
+  Download as ExportIcon, // Import Export Icon
 } from "@mui/icons-material";
 import PromptForm from "./PromptForm";
-import { deletePrompt } from "../../services/api";
+import { deletePrompt, exportPromptById } from "../../services/api"; // Import exportPromptById
 
 const PromptList = ({ prompts, categories, loading, onAction }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -39,6 +41,7 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promptToDelete, setPromptToDelete] = useState(null);
   const [filter, setFilter] = useState({ category: "", search: "" });
+  const [isExportingSingle, setIsExportingSingle] = useState(false); // State for single export loading
 
   const handleMenuOpen = (event, prompt) => {
     setAnchorEl(event.currentTarget);
@@ -59,6 +62,20 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
       onAction("Erro ao copiar prompt", "error");
     }
   };
+
+  const handleExportSingle = async (prompt) => {
+    setIsExportingSingle(true);
+    handleMenuClose(); // Close menu immediately
+    try {
+      const result = await exportPromptById(prompt.id);
+      onAction(`Prompt "${prompt.title}" exportado como ${result.filename}!`, "success");
+    } catch (error) {
+      onAction("Erro ao exportar prompt: " + error.message, "error");
+    } finally {
+      setIsExportingSingle(false);
+    }
+  };
+
 
   const handleEdit = (prompt) => {
     setEditingPrompt(prompt);
@@ -133,7 +150,7 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
       >
         <Typography variant="h6">Prompts ({filteredPrompts.length})</Typography>
         <Button
-          variant="contained"
+           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setFormOpen(true)}
         >
@@ -143,7 +160,7 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
 
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Filtrar por categoria</InputLabel>
+           <InputLabel>Filtrar por categoria</InputLabel>
           <Select
             value={filter.category}
             label="Filtrar por categoria"
@@ -151,7 +168,7 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
               setFilter((prev) => ({ ...prev, category: e.target.value }))
             }
           >
-            <MenuItem value="">Todas as categorias</MenuItem>
+             <MenuItem value="">Todas as categorias</MenuItem>
             {categories.map((category) => (
               <MenuItem key={category.id} value={category.id}>
                 {category.name}
@@ -184,72 +201,73 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
             >
               <CardContent sx={{ flexGrow: 1 }}>
                 <Box
-                  sx={{
+                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
                     mb: 2,
-                  }}
+                   }}
                 >
                   <Typography variant="h6" component="h3" gutterBottom>
                     {prompt.title}
                   </Typography>
                   <IconButton
-                    size="small"
-                    onClick={(e) => handleMenuOpen(e, prompt)}
+                     size="small"
+                     onClick={(e) => handleMenuOpen(e, prompt)}
+                     disabled={isExportingSingle} // Disable menu button during single export
                   >
-                    <MoreVertIcon />
+                     {isExportingSingle && selectedPrompt?.id === prompt.id ? <CircularProgress size={20} /> : <MoreVertIcon />}
                   </IconButton>
-                </Box>
+                 </Box>
 
                 {prompt.description && (
                   <Typography variant="body2" color="text.secondary" paragraph>
                     {prompt.description}
                   </Typography>
-                )}
+                 )}
 
                 <Typography
                   variant="body2"
                   sx={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    display: "-webkit-box",
+                     display: "-webkit-box",
                     WebkitLineClamp: 3,
                     WebkitBoxOrient: "vertical",
                     mb: 2,
-                  }}
+                   }}
                 >
                   {prompt.content}
                 </Typography>
 
                 {prompt.categoryId && (
                   <Chip
-                    label={getCategoryName(prompt.categoryId)}
+                     label={getCategoryName(prompt.categoryId)}
                     size="small"
                     sx={{
                       backgroundColor: getCategoryColor(prompt.categoryId),
                       color: "white",
-                      mb: 1,
+                       mb: 1,
                     }}
                   />
                 )}
 
                 {prompt.tags && prompt.tags.length > 0 && (
-                  <Box
+                   <Box
                     sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}
                   >
                     {prompt.tags.map((tag, index) => (
-                      <Chip
+                       <Chip
                         key={index}
                         label={tag}
                         size="small"
                         variant="outlined"
-                      />
+                       />
                     ))}
                   </Box>
                 )}
               </CardContent>
-            </Card>
+             </Card>
           </Grid>
         ))}
       </Grid>
@@ -270,16 +288,21 @@ const PromptList = ({ prompts, categories, loading, onAction }) => {
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => handleCopy(selectedPrompt)}>
-          <CopyIcon sx={{ mr: 1 }} fontSize="small" />
-          Copiar
+           <CopyIcon sx={{ mr: 1 }} fontSize="small" />
+          Copiar Conteúdo
         </MenuItem>
+        <MenuItem onClick={() => handleExportSingle(selectedPrompt)}>
+           <ExportIcon sx={{ mr: 1 }} fontSize="small" />
+           Exportar este Prompt
+        </MenuItem>
+        <Divider />
         <MenuItem onClick={() => handleEdit(selectedPrompt)}>
           <EditIcon sx={{ mr: 1 }} fontSize="small" />
           Editar
         </MenuItem>
         <MenuItem
           onClick={() => handleDeleteClick(selectedPrompt)}
-          sx={{ color: "error.main" }}
+           sx={{ color: "error.main" }}
         >
           <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
           Excluir

@@ -9,17 +9,6 @@ const readDb = async () => {
     const db = JSON.parse(data);
     return db;
   } catch (error) {
-    if (error.code === "ENOENT") {
-      logger.warn("db.json not found, creating a new one.");
-      const initialData = {
-        categories: [],
-        prompts: [],
-        projects: [],
-        gitSettings: [],
-      };
-      await writeDb(initialData);
-      return initialData;
-    }
     logger.error(`Error reading from db.json: ${error.message}`);
     throw new Error("Could not read from database.");
   }

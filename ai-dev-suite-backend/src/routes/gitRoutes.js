@@ -1,17 +1,18 @@
 const express = require('express');
 const gitController = require('../controllers/gitController');
 const validationMiddleware = require('../middlewares/validationMiddleware');
-const { 
-    gitCommitSchema, 
-    gitRevertSchema, 
-    createBranchSchema, 
-    mergeBranchSchema, 
-    setReferenceBranchSchema, 
+const {
+    gitCommitSchema,
+    gitRevertSchema,
+    createBranchSchema,
+    mergeBranchSchema,
+    setReferenceBranchSchema,
     initRepoSchema,
     remoteSchema,
     removeRemoteSchema,
     pushPullSchema,
-    cloneRepoSchema
+    cloneRepoSchema,
+    checkoutBranchSchema // Import the new schema
 } = require('../validators/gitValidator');
 const router = express.Router();
 
@@ -22,6 +23,8 @@ router.get('/status/:projectId', gitController.getStatus);
 router.get('/remote-status/:projectId', gitController.getRemoteStatus);
 router.post('/branch', validationMiddleware(createBranchSchema), gitController.createBranch);
 router.post('/branch/merge', validationMiddleware(mergeBranchSchema), gitController.mergeBranch);
+router.get('/branch/local/:projectId', gitController.getLocalBranches); // New route for local branches
+router.post('/branch/checkout', validationMiddleware(checkoutBranchSchema), gitController.checkoutBranch); // New route for checkout
 
 router.get('/reference-branch/:projectId', gitController.getProjectReferenceBranch);
 router.post('/reference-branch', validationMiddleware(setReferenceBranchSchema), gitController.setProjectReferenceBranch);

@@ -31,9 +31,12 @@ import {
   Bolt as GoDevIcon,
   Brightness4 as Brightness4Icon,
   Brightness7 as Brightness7Icon,
+  Settings as SettingsIcon,
+  Storage as DatabaseIcon,
 } from "@mui/icons-material";
 import logo from "../../assets/logo.png";
 import { ColorModeContext } from "../../App";
+
 const NavigationHeader = ({ apiStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,6 +44,7 @@ const NavigationHeader = ({ apiStatus }) => {
 
   const theme = useTheme();
   const colorMode = useContext(ColorModeContext);
+
   const getActiveTab = () => {
     const path = location.pathname;
     if (path.startsWith("/analyzer")) return 0;
@@ -49,7 +53,18 @@ const NavigationHeader = ({ apiStatus }) => {
     if (path.startsWith("/go-dev")) return 3;
     if (path.startsWith("/metrics")) return 4;
     if (path.startsWith("/prompts")) return 5;
-    return 0;
+    if (
+      [
+        "/git-config",
+        "/database",
+        "/projects",
+        "/templates",
+        "/project-builder",
+        "/favicon-generator",
+      ].some((p) => path.startsWith(p))
+    )
+      return false;
+    return 0; // Default to Analyzer if no match
   };
 
   const handleTabChange = (event, newValue) => {
@@ -74,6 +89,7 @@ const NavigationHeader = ({ apiStatus }) => {
         return <CheckingIcon sx={{ color: "#ff9800", fontSize: 20 }} />;
     }
   };
+
   const getStatusTitle = () => {
     switch (apiStatus) {
       case "connected":
@@ -84,30 +100,27 @@ const NavigationHeader = ({ apiStatus }) => {
         return "Verificando API...";
     }
   };
+
   const handleProjectMenuClick = (event) => {
     setProjectMenuAnchor(event.currentTarget);
   };
+
   const handleProjectMenuClose = () => {
     setProjectMenuAnchor(null);
   };
-  const handleViewProjects = () => {
-    navigate("/projects");
+
+  const handleNavigate = (path) => {
+    navigate(path);
     handleProjectMenuClose();
   };
-  const handleViewTemplates = () => {
-    navigate("/templates");
-    handleProjectMenuClose();
-  };
-  const handleViewBuilder = () => {
-    navigate("/project-builder");
-    handleProjectMenuClose();
-  };
-  const handleViewFavicons = () => {
-    navigate("/favicon-generator");
-    handleProjectMenuClose();
-  };
+
   return (
-    <AppBar position="sticky" color="primary" elevation={1} sx={{ top: 0, zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+    <AppBar
+      position="sticky"
+      color="primary"
+      elevation={1}
+      sx={{ top: 0, zIndex: (theme) => theme.zIndex.drawer + 1 }}
+    >
       <Toolbar sx={{ justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <IconButton
@@ -155,9 +168,19 @@ const NavigationHeader = ({ apiStatus }) => {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Tooltip title={theme.palette.mode === 'dark' ? 'Modo Claro' : 'Modo Escuro'}>
-            <IconButton sx={{ ml: 1 }} onClick={colorMode.toggleColorMode} color="inherit">
-              {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          <Tooltip
+            title={theme.palette.mode === "dark" ? "Modo Claro" : "Modo Escuro"}
+          >
+            <IconButton
+              sx={{ ml: 1 }}
+              onClick={colorMode.toggleColorMode}
+              color="inherit"
+            >
+              {theme.palette.mode === "dark" ? (
+                <Brightness7Icon />
+              ) : (
+                <Brightness4Icon />
+              )}
             </IconButton>
           </Tooltip>
           <IconButton
@@ -205,22 +228,31 @@ const NavigationHeader = ({ apiStatus }) => {
           open={Boolean(projectMenuAnchor)}
           onClose={handleProjectMenuClose}
         >
-          <MenuItem onClick={handleViewBuilder}>
+          <MenuItem onClick={() => handleNavigate("/projects")}>
+            <ProjectsIcon sx={{ mr: 1 }} />
+            Projetos
+          </MenuItem>
+          <MenuItem onClick={() => handleNavigate("/templates")}>
+            <TemplatesIcon sx={{ mr: 1 }} />
+            Templates de Projetos
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={() => handleNavigate("/project-builder")}>
             <BuilderIcon sx={{ mr: 1 }} />
             Project Builder
           </MenuItem>
-          <MenuItem onClick={handleViewFavicons}>
+          <MenuItem onClick={() => handleNavigate("/favicon-generator")}>
             <ImageIcon sx={{ mr: 1 }} />
             Favicon Generator
           </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleViewProjects}>
-            <ProjectsIcon sx={{ mr: 1 }} />
-            Ver Projetos
+          <MenuItem onClick={() => handleNavigate("/git-config")}>
+            <SettingsIcon sx={{ mr: 1 }} />
+            Git Config
           </MenuItem>
-          <MenuItem onClick={handleViewTemplates}>
-            <TemplatesIcon sx={{ mr: 1 }} />
-            Templates de Projetos
+          <Divider />
+          <MenuItem onClick={() => handleNavigate("/database")}>
+            <DatabaseIcon sx={{ mr: 1 }} />
+            Importar/Exportar DB
           </MenuItem>
         </Menu>
       </Toolbar>

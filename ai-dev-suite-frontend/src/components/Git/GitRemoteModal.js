@@ -46,6 +46,7 @@ import {
   pushToRemote,
   pullFromRemote,
   getRemoteStatus,
+  getProjectReferenceBranch,
 } from "../../services/api";
 
 const GitRemoteModal = ({
@@ -61,7 +62,6 @@ const GitRemoteModal = ({
   const [error, setError] = useState("");
   const [report, setReport] = useState(null);
   const [remoteStatus, setRemoteStatus] = useState(null);
-
   const [view, setView] = useState("add");
   const [newRemoteName, setNewRemoteName] = useState("origin");
   const [newRemoteUrl, setNewRemoteUrl] = useState("");
@@ -69,6 +69,7 @@ const GitRemoteModal = ({
   const [branchWarningOpen, setBranchWarningOpen] = useState(false);
   const [warningAcknowledged, setWarningAcknowledged] = useState(false);
   const [actionToConfirm, setActionToConfirm] = useState(null);
+  const [branchForWarning, setBranchForWarning] = useState({ current: '', reference: '' });
 
   const [pushConfirmOpen, setPushConfirmOpen] = useState(false);
   const projectStatus = project
@@ -199,27 +200,33 @@ const GitRemoteModal = ({
   };
 
   const handleActionClick = async (action) => {
-    const refBranchResult = await getGitRemotes(project.id);
-    const referenceBranch = refBranchResult.referenceBranch;
-    if (currentBranch !== referenceBranch) {
-      setActionToConfirm(action);
-      setBranchWarningOpen(true);
-    } else {
-      if (action === "push") {
-        setPushConfirmOpen(true);
-      } else {
-        executePushOrPull("pull");
-      }
+    try {
+        const refBranchResult = await getProjectReferenceBranch(project.id);
+        const referenceBranch = refBranchResult.referenceBranch;
+
+        if (currentBranch !== referenceBranch) {
+            setBranchForWarning({ current: currentBranch, reference: referenceBranch });
+            setActionToConfirm(action);
+            setBranchWarningOpen(true);
+        } else {
+            if (action === "push") {
+                setPushConfirmOpen(true);
+            } else {
+                executePushOrPull("pull");
+            }
+        }
+    } catch (error) {
+        showNotification(`Erro ao verificar a branch de referência: ${error.message}`, 'error');
     }
   };
 
   const handleConfirmBranchWarning = () => {
+    setBranchWarningOpen(false);
     if (actionToConfirm === "push") {
       setPushConfirmOpen(true);
     } else {
-      executePushOrPull("pull");
+      executePushOrPull(actionToConfirm);
     }
-    setBranchWarningOpen(false);
   };
 
   if (!projectStatus) {
@@ -240,7 +247,6 @@ const GitRemoteModal = ({
     }
 
     const { ahead, behind } = remoteStatus;
-
     if (ahead === 0 && behind === 0) {
       return (
         <Alert severity="success" icon={<SyncedIcon fontSize="inherit" />}>
@@ -458,8 +464,11 @@ const GitRemoteModal = ({
           <Typography>
             Você não está na branch de referência do projeto.
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Branch Atual: <strong>{currentBranch}</strong>
+          <Typography variant="body2" sx={{ mt: 2 }}>
+            Branch Atual: <strong>{branchForWarning.current}</strong>
+          </Typography>
+           <Typography variant="body2" sx={{ mt: 1 }}>
+            Branch de Referência: <strong>{branchForWarning.reference}</strong>
           </Typography>
           <FormControlLabel
             control={
@@ -482,14 +491,16 @@ const GitRemoteModal = ({
           </Button>
         </DialogActions>
       </Dialog>
-
+      
       <Dialog open={pushConfirmOpen} onClose={() => setPushConfirmOpen(false)}>
         <DialogTitle>Confirmar Push</DialogTitle>
         <DialogContent>
           <Typography>
-            Tem certeza que deseja enviar as alterações da branch{" "}
-            <strong>{currentBranch}</strong> para o remote?
+             Você está prestes a enviar <strong>{remoteStatus?.ahead || 0} commit(s)</strong> para o remote na branch <strong>{currentBranch}</strong>.
           </Typography>
+          <Typography sx={{mt: 2}}>
+            Tem certeza que deseja continuar?
+        </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPushConfirmOpen(false)}>Cancelar</Button>

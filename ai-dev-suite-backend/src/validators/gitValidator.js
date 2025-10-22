@@ -67,6 +67,14 @@ const cloneRepoSchema = Joi.object({
     directory: Joi.string().required(),
 });
 
+// New schema for checkout
+const checkoutBranchSchema = Joi.object({
+    projectId: Joi.string().uuid().required(),
+    branchName: Joi.string().trim().min(1).required(),
+    applyToSubProjects: Joi.boolean().required(),
+});
+
+
 module.exports = {
   gitCommitSchema,
   gitRevertSchema,
@@ -78,4 +86,5 @@ module.exports = {
   removeRemoteSchema,
   pushPullSchema,
   cloneRepoSchema,
+  checkoutBranchSchema, // Export the new schema
 };

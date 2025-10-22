@@ -16,6 +16,8 @@ const templateRoutes = require('./routes/templateRoutes');
 const projectBuilderRoutes = require('./routes/projectBuilderRoutes');
 const faviconRoutes = require('./routes/faviconRoutes');
 const explorerRoutes = require('./routes/explorerRoutes');
+const gitConfigRoutes = require('./routes/gitConfigRoutes');
+const databaseRoutes = require('./routes/databaseRoutes'); // Import new database routes
 const errorMiddleware = require("./middlewares/errorMiddleware");
 const logger = require("./utils/logger");
 
@@ -43,6 +45,8 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/project-builder', projectBuilderRoutes);
 app.use('/api/favicons', faviconRoutes);
 app.use('/api/explorer', explorerRoutes);
+app.use('/api/git-config', gitConfigRoutes);
+app.use('/api/database', databaseRoutes); // Add new database route
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -55,6 +59,8 @@ app.get("/api/health", (req, res) => {
       "git-management": "active",
       "project-analyzer": "active",
       "metrics": "active",
+      "git-config": "active",
+      "database-management": "active", // Added service status
     },
   });
 });

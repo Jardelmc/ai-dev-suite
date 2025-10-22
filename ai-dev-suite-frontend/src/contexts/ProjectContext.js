@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getProjects } from '../services/api';
+
 const ProjectContext = createContext();
 
 const STORAGE_KEY = 'ai-dev-suite-selected-project';
+const EXCLUSIONS_STORAGE_KEY = 'ai-dev-suite-project-exclusions';
 
 export const useProjectContext = () => {
   const context = useContext(ProjectContext);
@@ -11,6 +13,7 @@ export const useProjectContext = () => {
   }
   return context;
 };
+
 const saveToStorage = (project) => {
   try {
     if (project) {
@@ -32,6 +35,25 @@ const loadFromStorage = () => {
     return null;
   }
 };
+
+const saveExclusionsToStorage = (exclusions) => {
+  try {
+    localStorage.setItem(EXCLUSIONS_STORAGE_KEY, JSON.stringify(exclusions));
+  } catch (error) {
+    console.warn('Erro ao salvar exclusões no localStorage:', error);
+  }
+};
+
+const loadExclusionsFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(EXCLUSIONS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch (error) {
+    console.warn('Erro ao carregar exclusões do localStorage:', error);
+    return {};
+  }
+};
+
 export const ProjectProvider = ({ children }) => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -60,6 +82,7 @@ export const ProjectProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     const initializeContext = async () => {
       await loadProjects();
@@ -67,38 +90,50 @@ export const ProjectProvider = ({ children }) => {
       const storedProject = loadFromStorage();
       if (storedProject) {
         setSelectedProject(storedProject);
+        const allExclusions = loadExclusionsFromStorage();
+        const projectExclusions = allExclusions[storedProject.id] || [];
+        setAnalysisExclusions(new Set(projectExclusions));
       }
     };
 
     initializeContext();
   }, []);
 
-  const clearAnalysisExclusions = () => {
-    setAnalysisExclusions(new Set());
-  };
-
   const toggleAnalysisExclusion = (subProjectId) => {
-    setAnalysisExclusions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(subProjectId)) {
-        newSet.delete(subProjectId);
-      } else {
-        newSet.add(subProjectId);
-      }
-      return newSet;
-    });
+    if (!selectedProject || selectedProject.isManual) return;
+    
+    const newExclusions = new Set(analysisExclusions);
+    if (newExclusions.has(subProjectId)) {
+      newExclusions.delete(subProjectId);
+    } else {
+      newExclusions.add(subProjectId);
+    }
+    setAnalysisExclusions(newExclusions);
+
+    const allExclusions = loadExclusionsFromStorage();
+    if (newExclusions.size > 0) {
+        allExclusions[selectedProject.id] = Array.from(newExclusions);
+    } else {
+        delete allExclusions[selectedProject.id];
+    }
+    saveExclusionsToStorage(allExclusions);
   };
 
   const selectProject = (project) => {
     setSelectedProject(project);
     saveToStorage(project);
-    clearAnalysisExclusions();
+    
+    const allExclusions = loadExclusionsFromStorage();
+    const projectExclusions = allExclusions[project.id] || [];
+    setAnalysisExclusions(new Set(projectExclusions));
   };
+
   const clearSelection = () => {
     setSelectedProject(null);
     saveToStorage(null);
-    clearAnalysisExclusions();
+    setAnalysisExclusions(new Set());
   };
+
   const getProjectSelection = () => {
     if (!selectedProject) return {};
     if (selectedProject.isManual) {
@@ -106,13 +141,13 @@ export const ProjectProvider = ({ children }) => {
     }
     
     const selection = { projectId: selectedProject.id };
-
     if (analysisExclusions.size > 0) {
       selection.excludedSubprojectIds = Array.from(analysisExclusions);
     }
     
     return selection;
   };
+
   const value = {
     selectedProject,
     projects,
@@ -124,6 +159,7 @@ export const ProjectProvider = ({ children }) => {
     analysisExclusions,
     toggleAnalysisExclusion
   };
+
   return (
     <ProjectContext.Provider value={value}>
       {children}
