@@ -3,7 +3,7 @@ const fileService = require('./fileService');
 const projectService = require('./projectService');
 const templateService = require('./templateService');
 const codeWriterService = require('./codeWriterService');
-const gitService = require('./gitService');
+const gitignoreService = require('./git/gitignoreService');
 const logger = require('../utils/logger');
 
 const createProject = async (rootProject, subProjects) => {
@@ -34,9 +34,8 @@ const createProject = async (rootProject, subProjects) => {
       directory: subProjectDir,
       parentId: rootProjectData.id,
     });
-
     const gitIgnoreEntry = `${path.relative(rootProjectData.directory, subProjectData.directory).replace(/\\/g, '/')}/.git`;
-    await gitService.addEntryToGitignore(rootProjectData.directory, gitIgnoreEntry);
+    await gitignoreService.addEntryToGitignore(rootProjectData.directory, gitIgnoreEntry);
 
     if (sub.templateId) {
       const template = await templateService.getTemplateById(sub.templateId);
@@ -50,6 +49,7 @@ const createProject = async (rootProject, subProjects) => {
 
   return { rootProject: rootProjectData, subProjects: createdSubProjects };
 };
+
 const generateSolutionPrompt = async (projectId, functionalities) => {
   const rootProject = await projectService.getProjectById(projectId, true);
   if (!rootProject) {
@@ -83,18 +83,18 @@ Entenda como os sub-projetos se comunicarão.
 2.  **Solução Técnica Completa:** Elabore uma solução técnica detalhada em formato Markdown.
 A solução deve abranger:
     * **Visão Geral:** Um resumo da arquitetura e como as novas funcionalidades se encaixam.
-* **Estrutura de Dados:** Definição ou modificação de schemas/modelos de banco de dados.
-* **API Endpoints:** Detalhamento de todas as rotas de API (método, URL, payload, resposta).
-* **Lógica de Negócio:** Explicação de como os serviços, controllers e repositórios irão interagir para implementar a lógica.
-* **Integração Frontend-Backend:** Se houver um frontend, descreva como os componentes irão consumir a API.
+    * **Estrutura de Dados:** Definição ou modificação de schemas/modelos de banco de dados.
+    * **API Endpoints:** Detalhamento de todas as rotas de API (método, URL, payload, resposta).
+    * **Lógica de Negócio:** Explicação de como os serviços, controllers e repositórios irão interagir para implementar a lógica.
+    * **Integração Frontend-Backend:** Se houver um frontend, descreva como os componentes irão consumir a API.
 3.  **Plano de Implementação Granular (Tasks):** Esta é a parte mais crítica.
 Ao final da solução técnica, crie uma lista de tarefas sequenciais e extremamente detalhadas.
-* **Formato Obrigatório:** Use a notação \`<TASK:ID>[] - Título da Tarefa - Descrição completa...\` para cada tarefa.
-* **Autocontida:** Cada tarefa deve ser uma unidade de trabalho que um desenvolvedor (ou uma IA) possa executar sem precisar tomar decisões de arquitetura.
+    * **Formato Obrigatório:** Use a notação \`<TASK:ID>[] - Título da Tarefa - Descrição completa...\` para cada tarefa.
+    * **Autocontida:** Cada tarefa deve ser uma unidade de trabalho que um desenvolvedor (ou uma IA) possa executar sem precisar tomar decisões de arquitetura.
 Especifique quais arquivos modificar, quais funções criar, qual o conteúdo esperado, etc.
     * **Jornada Completa:** Para projetos com frontend, estruture as tarefas como "jornadas" ou "slices verticais".
 Cada tarefa (ou pequeno conjunto de tarefas) deve entregar uma pequena parte da funcionalidade de ponta-a-ponta (frontend, backend, banco de dados), permitindo testes e validação contínuos.
-* **Primeira Tarefa:** A primeira task DEVE ser sobre a "Preparação do Projeto".
+    * **Primeira Tarefa:** A primeira task DEVE ser sobre a "Preparação do Projeto".
 Ela deve instruir a ajustar os nomes nos arquivos de template (package.json, etc.), remover códigos de exemplo desnecessários e configurar as variáveis de ambiente iniciais para adequar o template ao novo projeto.
 ## Regras Fundamentais
 

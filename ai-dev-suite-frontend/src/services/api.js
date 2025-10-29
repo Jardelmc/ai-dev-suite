@@ -28,6 +28,11 @@ apiClient.interceptors.response.use(
         // More specific message for import errors
         message = `Erro na importação: ${message}`;
     }
+     if (error.response?.status === 409 && error.response?.data?.error?.code === 'CONFLICT') {
+        // More specific message for conflict errors (like duplicate custom extension)
+        message = `Conflito: ${message}`;
+    }
+
 
     throw new Error(message);
   }
@@ -304,10 +309,12 @@ export const generateSolutionPrompt = async (data) => {
   );
   return response.data.data;
 };
+
 export const generateFavicons = async (data) => {
   const response = await apiClient.post("/favicons/generate", data);
   return response.data.data;
 };
+
 export const openInExplorer = async (data) => {
   const response = await apiClient.post("/explorer/open", data);
   return response.data.data;
@@ -420,6 +427,29 @@ export const importDatabase = async (file, onUploadProgress) => {
         onUploadProgress, // Pass the progress callback
     });
     return response.data; // Backend should return { success: true, message: '...' }
+};
+
+// Custom Text Extensions API calls
+export const getCustomExtensions = async () => {
+    const response = await apiClient.get('/custom-extensions');
+    return response.data.data.customExtensions;
+};
+
+export const getDefaultExtensions = async () => {
+    const response = await apiClient.get('/custom-extensions/defaults');
+    return response.data.data; // Returns { extensions: [], noExtensionFiles: [] }
+};
+
+
+export const addCustomExtension = async (extension) => {
+    // extension should be a string like ".myext"
+    const response = await apiClient.post('/custom-extensions', { extension });
+    return response.data.data;
+};
+
+export const deleteCustomExtension = async (id) => {
+    const response = await apiClient.delete(`/custom-extensions/${id}`);
+    return response.data;
 };
 
 

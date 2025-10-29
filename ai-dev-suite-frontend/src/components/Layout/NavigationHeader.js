@@ -33,6 +33,7 @@ import {
   Brightness7 as Brightness7Icon,
   Settings as SettingsIcon,
   Storage as DatabaseIcon,
+  Extension as ExtensionIcon, // Added Icon
 } from "@mui/icons-material";
 import logo from "../../assets/logo.png";
 import { ColorModeContext } from "../../App";
@@ -53,6 +54,7 @@ const NavigationHeader = ({ apiStatus }) => {
     if (path.startsWith("/go-dev")) return 3;
     if (path.startsWith("/metrics")) return 4;
     if (path.startsWith("/prompts")) return 5;
+    // Update check to include new menu items
     if (
       [
         "/git-config",
@@ -61,9 +63,10 @@ const NavigationHeader = ({ apiStatus }) => {
         "/templates",
         "/project-builder",
         "/favicon-generator",
+        "/custom-extensions", // Added new path
       ].some((p) => path.startsWith(p))
     )
-      return false;
+      return false; // No main tab selected for these pages
     return 0; // Default to Analyzer if no match
   };
 
@@ -183,18 +186,19 @@ const NavigationHeader = ({ apiStatus }) => {
               )}
             </IconButton>
           </Tooltip>
-          <IconButton
-            title={getStatusTitle()}
-            sx={{
-              p: 1,
-              backgroundColor: "rgba(255,255,255,0.1)",
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.2)",
-              },
-            }}
-          >
-            {getStatusIcon()}
-          </IconButton>
+          <Tooltip title={getStatusTitle()}>
+             <IconButton
+                sx={{
+                  p: 1,
+                  backgroundColor: "rgba(255,255,255,0.1)",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                  },
+                }}
+             >
+                {getStatusIcon()}
+             </IconButton>
+          </Tooltip>
 
           <Box
             sx={{
@@ -245,11 +249,15 @@ const NavigationHeader = ({ apiStatus }) => {
             <ImageIcon sx={{ mr: 1 }} />
             Favicon Generator
           </MenuItem>
+          <Divider />
           <MenuItem onClick={() => handleNavigate("/git-config")}>
             <SettingsIcon sx={{ mr: 1 }} />
             Git Config
           </MenuItem>
-          <Divider />
+          <MenuItem onClick={() => handleNavigate("/custom-extensions")}>
+            <ExtensionIcon sx={{ mr: 1 }} /> {/* Added Menu Item */}
+            Extensões Customizadas
+          </MenuItem>
           <MenuItem onClick={() => handleNavigate("/database")}>
             <DatabaseIcon sx={{ mr: 1 }} />
             Importar/Exportar DB

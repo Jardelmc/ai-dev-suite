@@ -13,12 +13,15 @@ import {
   TableSortLabel,
   Tooltip,
   IconButton,
+  CircularProgress // Import CircularProgress
 } from "@mui/material";
 import {
   Block as IgnoreIcon,
-  ContentCopy as CopyIcon,
+  // ContentCopy as CopyIcon, // Replaced
+  AutoFixHigh as RefactorIcon // Optional: Could use a different icon for the Chip
 } from "@mui/icons-material";
 
+// getLineColor function remains the same
 const getLineColor = (lines) => {
   if (lines > 600) return "#f44336";
   if (lines > 400) return "#ff9800";
@@ -29,10 +32,12 @@ const getLineColor = (lines) => {
 const ProjectMetricsTable = ({
   projectData,
   onIgnoreFile,
-  onCopyRefactorPrompt,
+  onRefactorAction, // Changed prop name
+  actionLoading // Added prop for loading state
 }) => {
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("lines");
+  const [loadingFile, setLoadingFile] = useState(null); // State to track which file action is loading
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -52,6 +57,13 @@ const ProjectMetricsTable = ({
       return 0;
     });
   }, [order, orderBy, projectData.fileMetrics]);
+
+  const handleRefactorClick = async (filePath) => {
+    setLoadingFile(filePath); // Set loading state for this specific file
+    await onRefactorAction(filePath);
+    setLoadingFile(null); // Reset loading state after action completes
+  };
+
   return (
     <Paper variant="outlined" sx={{ mt: 3 }}>
       <Box
@@ -117,25 +129,43 @@ const ProjectMetricsTable = ({
                   />
                 </TableCell>
                 <TableCell>{file.tokens}</TableCell>
-                <TableCell>
+                <TableCell sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                   <Tooltip title="Adicionar à lista de ignorados">
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        onIgnoreFile(file.path, projectData.projectId)
-                      }
-                    >
-                      <IgnoreIcon fontSize="small" />
-                    </IconButton>
+                    <span> {/* Span needed for disabled button tooltip */}
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          onIgnoreFile(file.path, projectData.projectId)
+                        }
+                        disabled={actionLoading} // Disable during any refactor action
+                      >
+                        <IgnoreIcon fontSize="small" />
+                      </IconButton>
+                    </span>
                   </Tooltip>
-                  <Tooltip title="Copiar prompt de refatoração">
-                    <IconButton
-                      size="small"
-                      onClick={() => onCopyRefactorPrompt(file.path)}
-                    >
-                      <CopyIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  {/* Replace IconButton with Chip */}
+                   <Tooltip title="Copiar prompt, Analisar/Baixar projeto e Abrir Agente">
+                        <span> {/* Span needed for disabled chip tooltip */}
+                           <Chip
+                                label={loadingFile === file.path ? <CircularProgress size={16} color="inherit" /> : "Refatorar"}
+                                size="small"
+                                clickable={!actionLoading} // Make it clickable only when not loading
+                                onClick={() => !actionLoading && handleRefactorClick(file.path)}
+                                disabled={actionLoading} // Disable during any refactor action
+                                sx={{
+                                    cursor: actionLoading ? 'default' : 'pointer',
+                                    backgroundColor: 'success.light',
+                                    color: 'success.contrastText',
+                                    '&:hover': {
+                                      backgroundColor: !actionLoading ? 'success.main' : undefined,
+                                    },
+                                    height: 24, // Adjust height if needed
+                                    fontSize: '0.75rem'
+                                }}
+                                // icon={loadingFile === file.path ? undefined : <RefactorIcon sx={{ fontSize: 16 }} />} // Optional icon
+                           />
+                        </span>
+                   </Tooltip>
                 </TableCell>
               </TableRow>
             ))}

@@ -1,7 +1,10 @@
 const gitService = require('../services/gitService');
+const gitProjectService = require('../services/git/gitProjectService');
+const gitDbService = require('../services/git/gitDbService');
 const projectService = require('../services/projectService');
 const responseFormatter = require('../utils/responseFormatter');
 const logger = require('../utils/logger');
+
 const commitChanges = async (req, res, next) => {
   try {
     const { projectId, projectDir, commitMessage } = req.body;
@@ -30,6 +33,7 @@ const commitChanges = async (req, res, next) => {
     next(error);
   }
 };
+
 const revertChanges = async (req, res, next) => {
   try {
     const { projectId, projectDir } = req.body;
@@ -70,10 +74,11 @@ const getStatus = async (req, res, next) => {
         next(error);
     }
 };
+
 const createBranch = async (req, res, next) => {
     try {
         const { projectId, newBranchName, referenceBranch, applyToSubProjects } = req.body;
-        const result = await gitService.createBranch(projectId, newBranchName, referenceBranch, applyToSubProjects);
+        const result = await gitProjectService.createBranch(projectId, newBranchName, referenceBranch, applyToSubProjects);
         logger.info(`Git create branch processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Branch creation process completed.', result);
     } catch (error) {
@@ -85,7 +90,7 @@ const createBranch = async (req, res, next) => {
 const mergeBranch = async (req, res, next) => {
     try {
         const { projectId, referenceBranch, deleteAfterMerge, applyToSubProjects } = req.body;
-        const result = await gitService.mergeBranch(projectId, referenceBranch, deleteAfterMerge, applyToSubProjects);
+        const result = await gitProjectService.mergeBranch(projectId, referenceBranch, deleteAfterMerge, applyToSubProjects);
         logger.info(`Git merge branch processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Branch merge process completed.', result);
     } catch (error) {
@@ -97,7 +102,7 @@ const mergeBranch = async (req, res, next) => {
 const getProjectReferenceBranch = async (req, res, next) => {
     try {
         const { projectId } = req.params;
-        const result = await gitService.getProjectReferenceBranch(projectId);
+        const result = await gitDbService.getProjectReferenceBranch(projectId);
         logger.info(`Reference branch retrieved for project: ${projectId}`);
         return responseFormatter.success(res, 'Reference branch retrieved successfully.', result);
     } catch (error) {
@@ -105,10 +110,11 @@ const getProjectReferenceBranch = async (req, res, next) => {
         next(error);
     }
 };
+
 const setProjectReferenceBranch = async (req, res, next) => {
     try {
         const { projectId, branchName, applyToSubProjects } = req.body;
-        const result = await gitService.setProjectReferenceBranch(projectId, branchName, applyToSubProjects);
+        const result = await gitDbService.setProjectReferenceBranch(projectId, branchName, applyToSubProjects);
         logger.info(`Reference branch updated for project: ${projectId}`);
         return responseFormatter.success(res, 'Reference branch updated and checked out successfully.', result);
     } catch (error) {
@@ -116,6 +122,7 @@ const setProjectReferenceBranch = async (req, res, next) => {
         next(error);
     }
 };
+
 const initRepository = async (req, res, next) => {
     try {
         const { projectId } = req.body;
@@ -127,6 +134,7 @@ const initRepository = async (req, res, next) => {
         next(error);
     }
 };
+
 const getRemotes = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -138,10 +146,11 @@ const getRemotes = async (req, res, next) => {
         next(error);
     }
 };
+
 const addRemote = async (req, res, next) => {
     try {
         const { projectId, applyToSubProjects, remoteName, remoteUrl } = req.body;
-        const result = await gitService.addRemoteToProject(projectId, applyToSubProjects, remoteName, remoteUrl);
+        const result = await gitProjectService.addRemoteToProject(projectId, applyToSubProjects, remoteName, remoteUrl);
         logger.info(`Add remote processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Add remote process completed.', result);
     } catch (error) {
@@ -153,7 +162,7 @@ const addRemote = async (req, res, next) => {
 const removeRemote = async (req, res, next) => {
     try {
         const { projectId, applyToSubProjects, remoteName } = req.body;
-        const result = await gitService.removeRemoteFromProject(projectId, applyToSubProjects, remoteName);
+        const result = await gitProjectService.removeRemoteFromProject(projectId, applyToSubProjects, remoteName);
         logger.info(`Remove remote processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Remove remote process completed.', result);
     } catch (error) {
@@ -161,10 +170,11 @@ const removeRemote = async (req, res, next) => {
         next(error);
     }
 };
+
 const push = async (req, res, next) => {
     try {
         const { projectId, applyToSubProjects, remoteName } = req.body;
-        const result = await gitService.pushFromProject(projectId, applyToSubProjects, remoteName);
+        const result = await gitProjectService.pushFromProject(projectId, applyToSubProjects, remoteName);
         logger.info(`Push processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Push process completed.', result);
     } catch (error) {
@@ -172,10 +182,11 @@ const push = async (req, res, next) => {
         next(error);
     }
 };
+
 const pull = async (req, res, next) => {
     try {
         const { projectId, applyToSubProjects, remoteName } = req.body;
-        const result = await gitService.pullToProject(projectId, applyToSubProjects, remoteName);
+        const result = await gitProjectService.pullToProject(projectId, applyToSubProjects, remoteName);
         logger.info(`Pull processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Pull process completed.', result);
     } catch (error) {
@@ -183,6 +194,7 @@ const pull = async (req, res, next) => {
         next(error);
     }
 };
+
 const getRemoteStatus = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -194,6 +206,7 @@ const getRemoteStatus = async (req, res, next) => {
         next(error);
     }
 };
+
 const cloneRepository = async (req, res, next) => {
     try {
         const { parentId, repositoryUrl, projectName, directory } = req.body;
@@ -221,7 +234,7 @@ const getLocalBranches = async (req, res, next) => {
 const checkoutBranch = async (req, res, next) => {
     try {
         const { projectId, branchName, applyToSubProjects } = req.body;
-        const result = await gitService.checkoutBranch(projectId, branchName, applyToSubProjects);
+        const result = await gitProjectService.checkoutBranch(projectId, branchName, applyToSubProjects);
         logger.info(`Checkout branch processed for project: ${projectId}`);
         return responseFormatter.success(res, 'Checkout branch process completed.', result);
     } catch (error) {
@@ -229,7 +242,6 @@ const checkoutBranch = async (req, res, next) => {
         next(error);
     }
 };
-
 
 module.exports = {
   commitChanges,

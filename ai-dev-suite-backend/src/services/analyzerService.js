@@ -8,11 +8,41 @@ const {
   shouldIgnoreEntry,
 } = require("../utils/ignoreUtils");
 const {
-  TEXT_EXTENSIONS,
-  noExtensionTextFiles,
+  getAllowedTextExtensions,
+  getAllowedNoExtensionFiles,
 } = require("../utils/fileExtensionUtil");
 
+let allowedExtensions = [];
+let allowedNoExtFiles = [];
+
+// Initialize allowed lists asynchronously
+const initializeAllowedFiles = async () => {
+  try {
+    allowedExtensions = await getAllowedTextExtensions();
+    allowedNoExtFiles = getAllowedNoExtensionFiles();
+    logger.info(
+      "Allowed text file extensions initialized/updated for analyzer."
+    );
+  } catch (error) {
+    logger.error(
+      `Failed to initialize allowed text file extensions: ${error.message}`
+    );
+    // Fallback to defaults if DB read fails initially
+    allowedExtensions =
+      require("../utils/fileExtensionUtil").DEFAULT_TEXT_EXTENSIONS;
+    allowedNoExtFiles =
+      require("../utils/fileExtensionUtil").DEFAULT_NO_EXTENSION_TEXT_FILES;
+  }
+};
+initializeAllowedFiles();
+// Periodically update the allowed lists in case custom extensions change
+setInterval(initializeAllowedFiles, 2 * 60 * 1000); // Update every 2 minutes
+
 const isTextFile = (filePath) => {
+  // Use the cached/updated lists
+  const currentAllowedExtensions = allowedExtensions;
+  const currentAllowedNoExtFiles = allowedNoExtFiles;
+
   const fileName = path.basename(filePath);
   if (fileName === ".env" || fileName.startsWith(".env.")) {
     return true;
@@ -21,8 +51,8 @@ const isTextFile = (filePath) => {
   const ext = path.extname(filePath).toLowerCase();
   if (!ext) {
     const baseName = path.basename(filePath).toLowerCase();
-    if (!noExtensionTextFiles.includes(baseName)) return false;
-  } else if (!TEXT_EXTENSIONS.includes(ext)) {
+    if (!currentAllowedNoExtFiles.includes(baseName)) return false;
+  } else if (!currentAllowedExtensions.includes(ext)) {
     return false;
   }
 
@@ -69,6 +99,10 @@ const isTextFile = (filePath) => {
 
     return true;
   } catch (error) {
+    // Log error but treat as non-text if reading fails
+    logger.warn(
+      `Could not verify if ${filePath} is a text file: ${error.message}`
+    );
     return false;
   }
 };
@@ -196,11 +230,13 @@ const analyzeProject = async (
     throw error;
   }
 
+  // Ensure allowed lists are up-to-date before analysis
+  await initializeAllowedFiles();
+
   let tempFilePath;
   try {
     const { globalIgnores, projectIgnoresMap, allProjects } =
       await buildIgnoreMapForProject(projectId);
-
     const excludedProjectDirs = allProjects
       .filter((p) => excludedSubprojectIds.includes(p.id))
       .map((p) => p.directory);

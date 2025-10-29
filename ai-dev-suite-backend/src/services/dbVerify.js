@@ -11,6 +11,7 @@ const REQUIRED_ARRAYS = [
   "ignores",
   "templates",
   "gitSettings",
+  "customTextExtensions", // Added new required array
 ];
 
 // --- Templates DB Config ---
@@ -36,7 +37,6 @@ const createEmptyDb = async () => {
 const initializeMainDatabase = async () => {
   let db;
   let data;
-
   try {
     data = await fs.readFile(DB_PATH, "utf8");
   } catch (error) {
@@ -117,7 +117,6 @@ const createEmptyTemplatesDb = async () => {
 const initializeTemplatesDatabase = async () => {
   let db;
   let data;
-
   try {
     data = await fs.readFile(DB_TEMPLATES_PATH, "utf8");
   } catch (error) {

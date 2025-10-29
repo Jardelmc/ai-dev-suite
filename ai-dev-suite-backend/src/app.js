@@ -17,7 +17,9 @@ const projectBuilderRoutes = require('./routes/projectBuilderRoutes');
 const faviconRoutes = require('./routes/faviconRoutes');
 const explorerRoutes = require('./routes/explorerRoutes');
 const gitConfigRoutes = require('./routes/gitConfigRoutes');
-const databaseRoutes = require('./routes/databaseRoutes'); // Import new database routes
+const databaseRoutes = require('./routes/databaseRoutes');
+const customExtensionsRoutes = require('./routes/customExtensionsRoutes'); // Import new routes
+
 const errorMiddleware = require("./middlewares/errorMiddleware");
 const logger = require("./utils/logger");
 
@@ -26,12 +28,14 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) {
     logger.info(`${req.method} ${req.originalUrl}`);
   }
   next();
 });
+
 app.use("/api/categories", categoryRoutes);
 app.use("/api/prompts", promptRoutes);
 app.use("/api/projects", projectRoutes);
@@ -46,7 +50,8 @@ app.use('/api/project-builder', projectBuilderRoutes);
 app.use('/api/favicons', faviconRoutes);
 app.use('/api/explorer', explorerRoutes);
 app.use('/api/git-config', gitConfigRoutes);
-app.use('/api/database', databaseRoutes); // Add new database route
+app.use('/api/database', databaseRoutes);
+app.use('/api/custom-extensions', customExtensionsRoutes); // Use new routes
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -60,10 +65,12 @@ app.get("/api/health", (req, res) => {
       "project-analyzer": "active",
       "metrics": "active",
       "git-config": "active",
-      "database-management": "active", // Added service status
+      "database-management": "active",
+      "custom-extensions": "active", // Added service status
     },
   });
 });
+
 app.use("/api/*", (req, res) => {
   res.status(404).json({
     success: false,
@@ -73,6 +80,7 @@ app.use("/api/*", (req, res) => {
     },
   });
 });
+
 app.use(errorMiddleware);
 
 module.exports = app;

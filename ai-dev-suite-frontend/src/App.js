@@ -22,7 +22,8 @@ import ProjectBuilderPage from "./pages/ProjectBuilderPage";
 import FaviconGeneratorPage from "./pages/FaviconGeneratorPage";
 import GoDevPage from "./pages/GoDevPage";
 import GitConfigPage from "./pages/GitConfigPage";
-import DatabasePage from "./pages/DatabasePage"; // Import the new DatabasePage
+import DatabasePage from "./pages/DatabasePage";
+import CustomExtensionsPage from "./pages/CustomExtensionsPage"; // Import new page
 import { healthCheck } from "./services/api";
 
 export const ColorModeContext = createContext({ toggleColorMode: () => {} });
@@ -168,6 +169,10 @@ const App = () => {
                 <Route
                   path="/database"
                   element={<DatabasePage showNotification={showNotification} />}
+                />
+                 <Route
+                  path="/custom-extensions" // Add new route
+                  element={<CustomExtensionsPage showNotification={showNotification} />}
                 />
               </Routes>
             </MainLayout>
