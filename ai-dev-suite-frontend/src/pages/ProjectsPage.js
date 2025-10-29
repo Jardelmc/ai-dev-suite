@@ -31,11 +31,13 @@ const ProjectsPage = ({ showNotification }) => {
   const [projectForIgnore, setProjectForIgnore] = useState(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
+  // Memoize loadProjectsData to avoid unnecessary re-renders
   const loadProjectsData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const projectList = await getProjects();
+      // Build tree structure
       const projectMap = projectList.reduce((acc, project) => {
         acc[project.id] = { ...project, children: [] };
         return acc;
@@ -45,18 +47,31 @@ const ProjectsPage = ({ showNotification }) => {
       projectList.forEach((project) => {
         if (project.parentId && projectMap[project.parentId]) {
           projectMap[project.parentId].children.push(projectMap[project.id]);
-        } else {
+        } else if (!project.parentId) { // Ensure only root projects are pushed
           rootProjects.push(projectMap[project.id]);
         }
       });
       setProjects(rootProjects);
 
+      // Refresh selected project details if it exists after reload
       if (selectedProject) {
         const updatedSelected = projectList.find(p => p.id === selectedProject.id);
         if (updatedSelected) {
-          const updatedSelectedWithChildren = projectMap[updatedSelected.id];
+          // Find the updated project in the new tree structure to get children
+          const findInTree = (nodes, id) => {
+              for (const node of nodes) {
+                  if (node.id === id) return node;
+                  if (node.children) {
+                      const found = findInTree(node.children, id);
+                      if (found) return found;
+                  }
+              }
+              return null;
+          };
+          const updatedSelectedWithChildren = findInTree(rootProjects, updatedSelected.id);
           setSelectedProject(updatedSelectedWithChildren);
         } else {
+          // If the selected project no longer exists, clear selection
           setSelectedProject(null);
           setView('detail');
         }
@@ -69,11 +84,14 @@ const ProjectsPage = ({ showNotification }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedProject, showNotification]);
+  // Remove selectedProject from dependencies here, handle refresh inside the function
+  }, [showNotification]);
 
+  // Initial load
   useEffect(() => {
     loadProjectsData();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   const handleSelectProject = (project) => {
     setSelectedProject(project);
@@ -107,13 +125,13 @@ const ProjectsPage = ({ showNotification }) => {
 
   const handleSaveSuccess = (message) => {
     showNotification(message, 'success');
-    loadProjectsData();
+    loadProjectsData(); // Reload projects after saving
     setView('detail');
     setProjectToEdit(null);
     setParentForNewSubproject(null);
   };
 
-  const openIgnoreManager = (project = null) => {
+   const openIgnoreManager = (project = null) => {
     setProjectForIgnore(project);
     setIgnoreModalOpen(true);
   };
@@ -126,7 +144,7 @@ const ProjectsPage = ({ showNotification }) => {
   const handleImportSuccess = (message) => {
     showNotification(message, 'success');
     setImportModalOpen(false);
-    loadProjectsData();
+    loadProjectsData(); // Reload projects after import
   };
 
   return (
@@ -196,7 +214,7 @@ const ProjectsPage = ({ showNotification }) => {
                 onEdit={handleStartEdit}
                 onAddSubproject={handleStartCreateSubproject}
                 onManageIgnores={openIgnoreManager}
-                onDeleteSuccess={handleSaveSuccess}
+                onDeleteSuccess={handleSaveSuccess} // Use handleSaveSuccess which reloads
                 showNotification={showNotification}
               />
             )}
@@ -204,7 +222,8 @@ const ProjectsPage = ({ showNotification }) => {
               <ProjectForm
                 projectToEdit={projectToEdit}
                 parentProject={parentForNewSubproject}
-                projects={projects}
+                // Pass only root projects for parent selection
+                projects={projects.filter(p => !p.parentId)}
                 onSaveSuccess={handleSaveSuccess}
                 onCancel={handleCancelForm}
                 showNotification={showNotification}
@@ -213,13 +232,14 @@ const ProjectsPage = ({ showNotification }) => {
           </Paper>
         </Grid>
       </Grid>
-      
+
+        {/* Ignore Manager Modal */}
         <Modal
             open={ignoreModalOpen}
             onClose={closeIgnoreManager}
             aria-labelledby="ignore-manager-title"
         >
-          <Box sx={{
+           <Box sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
@@ -231,11 +251,18 @@ const ProjectsPage = ({ showNotification }) => {
             }}>
                 <IgnoreManager
                     project={projectForIgnore}
-                    onAction={(msg, sev) => showNotification(msg, sev)}
+                    // Pass loadProjectsData to refresh project details after adding ignores if needed
+                    onAction={(msg, sev) => {
+                        showNotification(msg, sev);
+                        // Optionally reload project list if global ignores change affects project details display
+                        // loadProjectsData();
+                    }}
                     onClose={closeIgnoreManager}
                 />
             </Box>
         </Modal>
+
+         {/* Git Import Modal */}
         <Modal
             open={importModalOpen}
             onClose={() => setImportModalOpen(false)}
@@ -253,7 +280,7 @@ const ProjectsPage = ({ showNotification }) => {
                 p: 4,
             }}>
                 <GitImportModal
-                    projects={projects.filter(p => !p.parentId)}
+                    projects={projects.filter(p => !p.parentId)} // Only allow importing into root projects
                     onClose={() => setImportModalOpen(false)}
                     onSuccess={handleImportSuccess}
                     showNotification={showNotification}
