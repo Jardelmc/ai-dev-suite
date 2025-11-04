@@ -8,11 +8,15 @@ echo.
 echo Installing frontend dependencies...
 cd ai-dev-suite-frontend
 call npm install
+cd ..
+
+echo.
+echo Installing root dependencies (fs-extra)...
+call npm install
 
 echo.
 echo Building frontend application...
 call npm run build
-cd ..
 
 echo.
 echo Installation complete.

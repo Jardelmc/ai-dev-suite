@@ -70,7 +70,7 @@ chmod +x install.sh
 
 ### Executando o Projeto
 
-Os scripts de inicialização utilizam o `concurrently` para iniciar o servidor backend e o servidor frontend simultaneamente. O frontend será servido a partir da pasta `dist` (build de produção).
+Os scripts de inicialização (run.bat / run.sh) iniciam apenas o servidor backend. O próprio backend (Express) é responsável por servir o frontend (build de produção), que é movido para a pasta ai-dev-suite-backend/src/public durante o processo de npm run build.
 
 **No Windows:**
 
@@ -87,8 +87,7 @@ chmod +x run.sh
 
 Após executar o script:
 
-- O **Backend** estará rodando em `http://localhost:5858`.
-- O **Frontend** estará acessível em `http://localhost:5859`.
+- A aplicação estará rodando em `http://localhost:5858`.
 
 Seu navegador padrão será aberto automaticamente na página da aplicação.
 

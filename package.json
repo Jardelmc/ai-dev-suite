@@ -4,9 +4,13 @@
   "description": "AI Dev Suite - Frontend e Backend integrados",
   "author": "Jardel Casteluber",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "build:frontend": "npm run build --prefix ai-dev-suite-frontend",
+    "move:dist": "node -e \"const fs = require('fs-extra'); fs.emptyDirSync('./ai-dev-suite-backend/src/public'); fs.moveSync('./ai-dev-suite-frontend/dist', './ai-dev-suite-backend/src/public', { overwrite: true }); console.log('Frontend build moved to backend/src/public');\"",
+    "build": "npm run build:frontend && npm run move:dist"
+  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "fs-extra": "^11.3.2"
   },
   "keywords": [
     "react",

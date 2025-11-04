@@ -9,16 +9,16 @@ const projectRoutes = require("./routes/projectRoutes");
 const codeWriterRoutes = require("./routes/codeWriterRoutes");
 const gitRoutes = require("./routes/gitRoutes");
 const analyzerRoutes = require("./routes/analyzerRoutes");
-const ignoreRoutes = require('./routes/ignoreRoutes');
-const vscodeRoutes = require('./routes/vscodeRoutes');
-const metricsRoutes = require('./routes/metricsRoutes');
-const templateRoutes = require('./routes/templateRoutes');
-const projectBuilderRoutes = require('./routes/projectBuilderRoutes');
-const faviconRoutes = require('./routes/faviconRoutes');
-const explorerRoutes = require('./routes/explorerRoutes');
-const gitConfigRoutes = require('./routes/gitConfigRoutes');
-const databaseRoutes = require('./routes/databaseRoutes');
-const customExtensionsRoutes = require('./routes/customExtensionsRoutes'); // Import new routes
+const ignoreRoutes = require("./routes/ignoreRoutes");
+const vscodeRoutes = require("./routes/vscodeRoutes");
+const metricsRoutes = require("./routes/metricsRoutes");
+const templateRoutes = require("./routes/templateRoutes");
+const projectBuilderRoutes = require("./routes/projectBuilderRoutes");
+const faviconRoutes = require("./routes/faviconRoutes");
+const explorerRoutes = require("./routes/explorerRoutes");
+const gitConfigRoutes = require("./routes/gitConfigRoutes");
+const databaseRoutes = require("./routes/databaseRoutes");
+const customExtensionsRoutes = require("./routes/customExtensionsRoutes"); // Import new routes
 
 const errorMiddleware = require("./middlewares/errorMiddleware");
 const logger = require("./utils/logger");
@@ -28,6 +28,14 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// --- SERVE FRONTEND ---
+const frontendBuildPath = path.join(__dirname, "public");
+const indexPath = path.join(frontendBuildPath, "index.html");
+
+// Serve static files (js, css, images)
+app.use(express.static(frontendBuildPath));
+// --- END SERVE FRONTEND ---
 
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) {
@@ -42,16 +50,16 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/code-writer", codeWriterRoutes);
 app.use("/api/git", gitRoutes);
 app.use("/api/analyzer", analyzerRoutes);
-app.use('/api/ignores', ignoreRoutes);
-app.use('/api/vscode', vscodeRoutes);
-app.use('/api/metrics', metricsRoutes);
-app.use('/api/templates', templateRoutes);
-app.use('/api/project-builder', projectBuilderRoutes);
-app.use('/api/favicons', faviconRoutes);
-app.use('/api/explorer', explorerRoutes);
-app.use('/api/git-config', gitConfigRoutes);
-app.use('/api/database', databaseRoutes);
-app.use('/api/custom-extensions', customExtensionsRoutes); // Use new routes
+app.use("/api/ignores", ignoreRoutes);
+app.use("/api/vscode", vscodeRoutes);
+app.use("/api/metrics", metricsRoutes);
+app.use("/api/templates", templateRoutes);
+app.use("/api/project-builder", projectBuilderRoutes);
+app.use("/api/favicons", faviconRoutes);
+app.use("/api/explorer", explorerRoutes);
+app.use("/api/git-config", gitConfigRoutes);
+app.use("/api/database", databaseRoutes);
+app.use("/api/custom-extensions", customExtensionsRoutes); // Use new routes
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -63,7 +71,7 @@ app.get("/api/health", (req, res) => {
       "code-writer": "active",
       "git-management": "active",
       "project-analyzer": "active",
-      "metrics": "active",
+      metrics: "active",
       "git-config": "active",
       "database-management": "active",
       "custom-extensions": "active", // Added service status
@@ -80,6 +88,25 @@ app.use("/api/*", (req, res) => {
     },
   });
 });
+
+// --- SPA CATCH-ALL ---
+// For any route not caught by API, serve the index.html
+app.get("*", (req, res, next) => {
+  // Check if index.html exists
+  fs.access(indexPath, fs.constants.F_OK, (err) => {
+    if (err) {
+      // File doesn't exist
+      return res
+        .status(500)
+        .send(
+          "Frontend build (index.html) not found. Please run the build process (npm run build) in the root directory."
+        );
+    }
+    // File exists, send it
+    res.sendFile(indexPath);
+  });
+});
+// --- END SPA CATCH-ALL ---
 
 app.use(errorMiddleware);
 
